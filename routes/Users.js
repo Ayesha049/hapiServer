@@ -16,12 +16,12 @@ exports.plugin = {
                 const userData = {
                     first_name: req.payload.first_name,
                     last_name: req.payload.last_name,
-                    user_email: req.payload.use_email,
+                    user_email: req.payload.user_email,
                     user_password: req.payload.user_password
                 }
 
                 return User.findOne({
-                        user_email: req.payload.use_email
+                        user_email: req.payload.user_email
                     })
                     .then(user => {
                         if (!user) {

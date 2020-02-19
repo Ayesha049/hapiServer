@@ -1,11 +1,10 @@
 'use strict'
 
+require('dotenv').config()
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const User = require('../models/User');
 const mongoose = require('mongoose');
-
-process.env.SECRET_KEY = 'secret'
 
 exports.plugin = {
     register: (server, optons, next) => {
@@ -46,6 +45,81 @@ exports.plugin = {
                     })
             }
         })
+
+        server.route({
+            method : 'POST',
+            path : '/login',
+            handler : (req, h) => {
+                return User.findOne({
+                    user_email : req.payload.user_email
+                })
+                .then(user => {
+                    if(user){
+                        if(bcrypt.compareSync(req.payload.user_password,user.user_password))
+                        {
+                            const payload = {
+                                id : user._id,
+                                first_name : user.first_name,
+                                last_name : user.last_name,
+                                email : user.user_email
+                            }
+                            
+                            let token = jwt.sign(payload,process.env.SECRET_KEY, {
+                                expiresIn : 1440
+                            });
+                            //console.log(`token : ${token}`)
+                            return token;
+                        }
+                        else{
+                            return {error : 'incorrect password!'}
+                        }
+                    }
+                    else{
+                        return {error : 'user not found!'}
+                    }
+                })
+                .catch(err => {
+                    return {error : err}
+                })
+            }
+        })
+
+        server.route({
+            method : 'GET',
+            path : '/profile',
+            handler : (req, h) => {
+                //console.log('endpoint hit')
+                //console.log(req.headers['authorization'])
+                var token = req.headers['authorization'].replace('Bearer ', '');
+                var decoded = jwt.verify(token, process.env.SECRET_KEY, (err, decoded) => {
+                    if (err) {
+                        console.log('jwt error ' + err + '  end')
+                     return err;
+                    }
+                  
+                    return decoded
+                   })
+                   
+
+                //console.log(decoded.id)
+
+                return User.findOne({
+                    _id : mongoose.Types.ObjectId(decoded.id)
+                })
+                .then(user => {
+                    if(user) {
+                        return user;
+                    }
+                    else{
+                        return { Error : 'User not found!'}
+                    }
+                })
+                .catch(err => {
+                    return { error : err}
+                })
+            }
+        })
+
     },
     name: 'users'
 }

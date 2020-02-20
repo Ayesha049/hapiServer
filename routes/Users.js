@@ -34,7 +34,7 @@ exports.plugin = {
                                         return 'error' + err
                                     })
                             })
-                            return { status: userData.use_email = ' registered!' }
+                            return { status: userData.user_email = ' registered!' }
                         } else {
                             return { error: 'user already exists' }
                         }
